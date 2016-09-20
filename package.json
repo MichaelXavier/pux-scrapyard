@@ -1,0 +1,19 @@
+{
+  "name": "pux-counter",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "pulp browserify --to output/index.js"
+  },
+  "author": "Michael Xavier",
+  "license": "MIT",
+  "dependencies": {
+    "react-dom": "^15.0.0",
+    "react": "^15.0.0"
+  }
+}
