@@ -8,12 +8,17 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "pulp browserify --to output/index.js"
+    "build": "pulp browserify --to output/index.js",
+    "server": "node server.js"
   },
   "author": "Michael Xavier",
   "license": "MIT",
   "dependencies": {
     "react-dom": "^15.0.0",
     "react": "^15.0.0"
+  },
+  "devDependencies": {
+    "express": "^4.14.0",
+    "cors": "^2.8.1"
   }
 }

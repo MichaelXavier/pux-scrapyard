@@ -1,11 +1,6 @@
--- | Current location of the ISS
--- use http://api.open-notify.org/iss-now.json
-module Components.ISS
+module Components.Now
     ( State(..)
     , initialState
-    , Loc(..)
-    , Lat(..)
-    , Lon(..)
     , Action(..)
     , update
     , view
@@ -26,64 +21,46 @@ import Pux.Html.Events (onClick)
 
 
 type State = {
-      loc :: Maybe Loc
+      now :: Maybe String
     , status :: String
     }
 
 -------------------------------------------------------------------------------
-newtype ISSPos = ISSPos Loc
+newtype NowResp = NowResp String
 
 
-issLoc :: ISSPos -> Loc
-issLoc (ISSPos l) = l
+now :: NowResp -> String
+now (NowResp n) = n
 
 
-instance decodeJsonISSPos :: DecodeJson ISSPos where
+instance decodeJsonNowResp :: DecodeJson NowResp where
   decodeJson json = do
     obj <- decodeJson json
-    pos <- obj .? "iss_position"
-    lat <- pos .? "latitude"
-    lon <- pos .? "longitude"
-    pure (ISSPos { lat: Lat lat, lon: Lon lon })
-
-
--------------------------------------------------------------------------------
-type Loc = {
-      lat :: Lat
-    , lon :: Lon
-    }
-
-
--------------------------------------------------------------------------------
-newtype Lat = Lat Number
-
-
--------------------------------------------------------------------------------
-newtype Lon = Lon Number
-
+    t <- obj .? "now"
+    pure (NowResp t)
 
 -------------------------------------------------------------------------------
 initialState :: State
-initialState = { loc: Nothing, status: "Not fetched" }
+initialState = { now: Nothing, status: "Not fetched" }
 
 
 -------------------------------------------------------------------------------
-data Action = RequestLoc
-            | ReceiveLoc (Either String Loc)
+data Action = RequestNow
+            | ReceiveNow (Either String String)
 
 
 -------------------------------------------------------------------------------
 update :: forall eff. Action -> State -> EffModel State Action (ajax :: AJAX | eff)
-update (ReceiveLoc (Left e)) s =
+update (ReceiveNow (Left e)) s =
   noEffects (s { status = e})
-update (ReceiveLoc (Right l)) s = noEffects (s {loc = Just l})
-update RequestLoc s = {
+update (ReceiveNow (Right t)) s = noEffects (s {now = Just t, status = "Fetched"})
+update RequestNow s = {
       state: s { status = "Fetching"}
     , effects: [ do
-      res <- attempt (get "http://api.open-notify.org/iss-now.json")
-      let decode reply = decodeJson reply.response :: Either String ISSPos
-      let loc = either (Left <<< show) (map issLoc <<< decode) res
-      pure (ReceiveLoc loc)
+      res <- attempt (get "/now.json")
+      let decode reply = decodeJson reply.response :: Either String NowResp
+      let t = either (Left <<< show) (map now <<< decode) res
+      pure (ReceiveNow t)
       ]
     }
 
@@ -95,11 +72,7 @@ view s =
     []
     [ p
         []
-        [ text ("lat: " <> lat)
-        ]
-    , p
-        []
-        [ text ("lon: " <> lon)
+        [ text ("now: " <> currentTime)
         ]
     , p
         []
@@ -108,17 +81,13 @@ view s =
     , p
         []
         [ button
-            [ onClick (const RequestLoc)
+            [ onClick (const RequestNow)
             ]
             [ text "Refresh"
             ]
         ]
     ]
   where
-    -- i should probably use a type alias
-    lat = case s.loc of
-      Just {lat: (Lat n)} -> show n
+    currentTime = case s.now of
       Nothing -> "Unknown"
-    lon = case s.loc of
-      Just {lon: (Lon n)} -> show n
-      Nothing -> "Unknown"
+      Just t -> t

@@ -5,7 +5,7 @@ module Main
 
 -------------------------------------------------------------------------------
 import Components.Counter as Counter
-import Components.ISS as ISS
+import Components.Now as Now
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Exception (EXCEPTION)
 import Data.Unit (Unit)
@@ -30,10 +30,10 @@ main = do
     }
   renderToDOM "#counter" counter.html
 
-  iss <- start
-    { initialState: ISS.initialState
-    , update: ISS.update
-    , view: ISS.view
+  now <- start
+    { initialState: Now.initialState
+    , update: Now.update
+    , view: Now.view
     , inputs: []
     }
-  renderToDOM "#iss" iss.html
+  renderToDOM "#now" now.html
