@@ -13,9 +13,9 @@ import Control.Monad.Aff (attempt)
 import Data.Argonaut ((.?), class DecodeJson, decodeJson)
 import Data.Maybe (Maybe(..))
 import Network.HTTP.Affjax (get, AJAX)
-import Prelude (const, map, (<<<), show, (<>), bind, ($), pure)
+import Prelude (const, map, (<<<), show, (<>), ($), pure, bind)
 import Pux (noEffects, EffModel)
-import Pux.Html (button, p, text, div, Html)
+import Pux.Html ((!), (#), (##), button, p, text, div, Html)
 import Pux.Html.Events (onClick)
 -------------------------------------------------------------------------------
 
@@ -53,7 +53,8 @@ data Action = RequestNow
 update :: forall eff. Action -> State -> EffModel State Action (ajax :: AJAX | eff)
 update (ReceiveNow (Left e)) s =
   noEffects (s { status = e})
-update (ReceiveNow (Right t)) s = noEffects (s {now = Just t, status = "Fetched"})
+update (ReceiveNow (Right t)) s = noEffects (s { now = Just t
+                                               , status = "Fetched"})
 update RequestNow s = {
       state: s { status = "Fetching"}
     , effects: [ do
@@ -66,26 +67,16 @@ update RequestNow s = {
 
 
 -------------------------------------------------------------------------------
+-- would like to use the do notation with html but it requires bind to be imported and it conflicts with the one from prelude
 view :: State -> Html Action
 view s =
   div
     []
-    [ p
-        []
-        [ text ("now: " <> currentTime)
-        ]
-    , p
-        []
-        [ text ("status: " <> s.status)
-        ]
-    , p
-        []
-        [ button
-            [ onClick (const RequestNow)
-            ]
-            [ text "Refresh"
-            ]
-        ]
+    [ p #
+        text ("now: " <> currentTime)
+    , p #
+        text ("status: " <> s.status)
+    , p # (button ! onClick (const RequestNow) # text "Refresh")
     ]
   where
     currentTime = case s.now of
