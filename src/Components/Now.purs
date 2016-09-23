@@ -16,6 +16,7 @@ import Network.HTTP.Affjax (get, AJAX)
 import Prelude (const, map, (<<<), show, (<>), ($), pure, bind)
 import Pux (noEffects, EffModel)
 import Pux.Html ((!), (#), (##), button, p, text, div, Html)
+import Pux.Html as H
 import Pux.Html.Events (onClick)
 -------------------------------------------------------------------------------
 
@@ -70,15 +71,14 @@ update RequestNow s = {
 -- would like to use the do notation with html but it requires bind to be imported and it conflicts with the one from prelude
 view :: State -> Html Action
 view s =
-  div
-    []
-    [ p #
-        text ("now: " <> currentTime)
-    , p #
+  div # do
+    p #
+      text ("now: " <> currentTime)
+    p #
         text ("status: " <> s.status)
-    , p # (button ! onClick (const RequestNow) # text "Refresh")
-    ]
+    p # (button ! onClick (const RequestNow) # text "Refresh")
   where
+    bind = H.bind
     currentTime = case s.now of
       Nothing -> "Unknown"
       Just t -> t
