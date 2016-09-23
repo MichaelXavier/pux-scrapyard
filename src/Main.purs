@@ -4,15 +4,15 @@ module Main
 
 
 -------------------------------------------------------------------------------
-import Components.Counter as Counter
-import Components.Now as Now
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Exception (EXCEPTION)
 import Data.Unit (Unit)
 import Network.HTTP.Affjax (AJAX)
 import Prelude (bind)
-import Pux (renderToDOM, fromSimple, start)
+import Pux (renderToDOM, start)
 import Signal.Channel (CHANNEL)
+-------------------------------------------------------------------------------
+import Components.App as App
 -------------------------------------------------------------------------------
 
 
@@ -22,18 +22,10 @@ main
                        , ajax :: AJAX
                        | eff) Unit
 main = do
-  counter <- start
-    { initialState: Counter.initialState
-    , update: fromSimple Counter.update
-    , view: Counter.view
+  app <- start
+    { initialState: App.initialState
+    , update: App.update
+    , view: App.view
     , inputs: []
     }
-  renderToDOM "#counter" counter.html
-
-  now <- start
-    { initialState: Now.initialState
-    , update: Now.update
-    , view: Now.view
-    , inputs: []
-    }
-  renderToDOM "#now" now.html
+  renderToDOM "#app" app.html

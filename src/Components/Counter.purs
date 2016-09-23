@@ -8,8 +8,10 @@ module Components.Counter
 
 
 -------------------------------------------------------------------------------
+import Pux.Html as H
 import Prelude (show, const, (+), (-))
-import Pux.Html (button, text, span, div, Html)
+import Pux.Html ((##), (!), (#), button, text, span, div, Html)
+import Pux.Html.Attributes (className)
 import Pux.Html.Events (onClick)
 -------------------------------------------------------------------------------
 
@@ -31,20 +33,14 @@ update Dec (State n) = State (n - 1)
 
 view :: State -> Html Action
 view (State count) =
-  div
-    []
-    [ span
-        []
-        [ button
-            [ onClick (const Dec)
-            ]
-            [ text "-"
-            ]
-        , text (show count)
-        , button
-            [ onClick (const Inc)
-            ]
-            [ text "+"
-            ]
-        ]
-    ]
+  div ! className "component" # do
+    span # do
+      button
+        ! onClick (const Dec)
+        # text "-"
+      text (show count)
+      button
+        ! onClick (const Inc)
+        # text "+"
+  where
+    bind = H.bind
