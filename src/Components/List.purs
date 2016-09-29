@@ -9,8 +9,10 @@ module Components.List
 
 -------------------------------------------------------------------------------
 import Components.ListItem as ListItem
-import Data.Array (mapMaybe, (:), snoc)
+import Data.Map as M
+import Data.Array as A
 import Data.Maybe (Maybe(Just, Nothing))
+import Data.Monoid (mempty)
 import Prelude (otherwise, (+), show, const, (<>), (<<<), map, ($), (==))
 import Pux.Html (li, ol, button, text, (##), (#), (!), div, Html)
 import Pux.Html.Attributes (className)
@@ -19,13 +21,13 @@ import Pux.Html.Events (onClick)
 
 
 type State = {
-      items :: Array ListItem.State
+      items :: M.Map Int ListItem.State
     , id :: Int
     }
 
 
 initialState :: State
-initialState = { items: [], id: 0 }
+initialState = { items: mempty, id: 0 }
 
 
 data Action = AddItem String
@@ -33,9 +35,9 @@ data Action = AddItem String
 
 
 update :: Action -> State -> State
-update (AddItem a) s = s { items = snoc s.items (ListItem.initialState s.id a)
+update (AddItem a) s = s { items = M.insert s.id (ListItem.initialState s.id a) s.items
                          , id = s.id + 1}
-update (ItemAction id a) s = s { items = mapMaybe go s.items }
+update (ItemAction id a) s = s { items = M.update go id s.items }
   where
     go itemState
       | itemState.id == id = go' (ListItem.update a itemState)
@@ -57,7 +59,7 @@ view s = div
     curId = s.id
     items = ol
       []
-      (map viewItem' s.items)
+      (A.fromFoldable (map viewItem' (M.values s.items)))
     addItem = button
       ! onClick (const (AddItem ("new " <> show curId)))
       # text "Add"
