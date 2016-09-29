@@ -9,7 +9,8 @@ import Control.Monad.Eff.Exception (EXCEPTION)
 import Data.Unit (Unit)
 import Network.HTTP.Affjax (AJAX)
 import Prelude (bind)
-import Pux (renderToDOM, start)
+import Pux (renderToDOM)
+import Pux.Devtool (start)
 import Signal.Channel (CHANNEL)
 -------------------------------------------------------------------------------
 import Components.App as App

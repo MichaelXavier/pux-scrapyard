@@ -8,44 +8,58 @@ module Components.List
 
 
 -------------------------------------------------------------------------------
-import Data.Array ((:), snoc)
-import Prelude (const, (<>), (<<<), map, ($))
+import Components.ListItem as ListItem
+import Data.Array (mapMaybe, (:), snoc)
+import Data.Maybe (Maybe(Just, Nothing))
+import Prelude (otherwise, (+), show, const, (<>), (<<<), map, ($), (==))
 import Pux.Html (li, ol, button, text, (##), (#), (!), div, Html)
 import Pux.Html.Attributes (className)
 import Pux.Html.Events (onClick)
 -------------------------------------------------------------------------------
 
 
-type State item = {
-      items :: Array item
+type State = {
+      items :: Array ListItem.State
+    , id :: Int
     }
 
 
-initialState :: forall item. State item
-initialState = { items: [] }
+initialState :: State
+initialState = { items: [], id: 0 }
 
 
-data Action item action = AddItem item
-                        | ItemAction action -- uhh, this seems...weird
+data Action = AddItem String
+            | ItemAction Int ListItem.Action -- uhh, this seems...weird
 
 
-update :: forall item action. Action item action -> State item -> State item
-update (AddItem a) s = s { items = snoc s.items a}
-update (ItemAction _) s = s --TODO: would we do indexing to address the right item? is this misguided?
+update :: Action -> State -> State
+update (AddItem a) s = s { items = snoc s.items (ListItem.initialState s.id a)
+                         , id = s.id + 1}
+update (ItemAction id a) s = s { items = mapMaybe go s.items }
+  where
+    go itemState
+      | itemState.id == id = go' (ListItem.update a itemState)
+      | otherwise          = go' itemState
+    go' itemState
+      | itemState.deleted = Nothing
+      | otherwise         = Just itemState
+
 
 -- item -> Html action
-view :: forall item action. item -> (item -> Html action) -> State item -> Html (Action item action)
-view newItem viewItem s = div
+view :: State -> Html Action
+view s = div
   [className "component"]
   [ text "list"
   , items
   , addItem
   ]
   where
+    curId = s.id
     items = ol
       []
       (map viewItem' s.items)
     addItem = button
-      ! onClick (const (AddItem newItem))
+      ! onClick (const (AddItem ("new " <> show curId)))
       # text "Add"
-    viewItem' i = li [] [map ItemAction (viewItem i)]
+    viewItem' :: ListItem.State -> Html Action
+    viewItem' i = li [] [map (ItemAction i.id) (ListItem.view i)]
