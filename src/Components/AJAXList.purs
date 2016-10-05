@@ -17,15 +17,14 @@ import Data.Map as M
 import Control.Monad.Aff (attempt)
 import Data.Argonaut ((.?), class DecodeJson, decodeJson)
 import Data.Either (Either(Right, Left), either)
-import Data.Foldable (class Foldable)
-import Data.Functor (class Functor)
 import Data.Maybe (Maybe(Nothing))
-import Data.Monoid (mempty)
+import Data.Monoid ((<>), mempty)
 import Data.Tuple (Tuple(Tuple))
 import Network.HTTP.Affjax (AJAX, get)
 import Prelude (pure, show, (<<<), map, bind)
 import Pux (noEffects, EffModel)
 import Pux.Html (text, (!), li, ol, (#), div, Html)
+import Pux.Html as H
 import Pux.Html.Attributes (className)
 -------------------------------------------------------------------------------
 
@@ -120,7 +119,17 @@ view s = div
   # do
     items
   where
-    items = ol
+    bind = H.bind
+    items = case s.status of
+      ListNotFetched -> text "Not fetched"
+      ListFetching -> do
+        text "Fetching"
+        items'
+      ListFetched -> items'
+      ListFetchError e -> do
+        text ("Error: " <> e)
+        items'
+    items' = ol
       []
       (A.fromFoldable (map viewItem' (M.values s.items)))
     viewItem' i = li

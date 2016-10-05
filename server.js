@@ -6,8 +6,13 @@ app.use(express.static('static'));
 app.use(express.static('output'));
 app.use(bodyParser.json());
 
-var items = [];
-var uid = 0;
+var items = [
+  {
+    text: "sample",
+    id: 0
+  }
+];
+var uid = 1;
 
 app.get('/now.json', function(req, res) {
   res.json({now: new Date()});

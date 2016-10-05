@@ -26,6 +26,7 @@ main
                        , dom :: DOM
                        | eff) Unit
 main = do
+  --todo constant signal for ajax refreshes
   urlSignal <- sampleUrl
   let routeSignal = urlSignal ~> App.match
   app <- start
