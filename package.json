@@ -14,8 +14,9 @@
   "author": "Michael Xavier",
   "license": "MIT",
   "dependencies": {
-    "react-dom": "^15.0.0",
-    "react": "^15.0.0"
+    "body-parser": "^1.15.2",
+    "react": "^15.0.0",
+    "react-dom": "^15.0.0"
   },
   "devDependencies": {
     "express": "^4.14.0"

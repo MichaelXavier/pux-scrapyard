@@ -4,16 +4,18 @@ module Main
 
 
 -------------------------------------------------------------------------------
+import Components.App as App
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Exception (EXCEPTION)
+import DOM (DOM)
 import Data.Unit (Unit)
 import Network.HTTP.Affjax (AJAX)
-import Prelude (bind)
+import Prelude ((<<<), bind)
 import Pux (renderToDOM)
 import Pux.Devtool (start)
+import Pux.Router (sampleUrl)
+import Signal ((~>))
 import Signal.Channel (CHANNEL)
--------------------------------------------------------------------------------
-import Components.App as App
 -------------------------------------------------------------------------------
 
 
@@ -21,12 +23,15 @@ main
     :: forall eff. Eff ( channel :: CHANNEL
                        , err :: EXCEPTION
                        , ajax :: AJAX
+                       , dom :: DOM
                        | eff) Unit
 main = do
+  urlSignal <- sampleUrl
+  let routeSignal = urlSignal ~> App.match
   app <- start
     { initialState: App.initialState
     , update: App.update
     , view: App.view
-    , inputs: []
+    , inputs: [routeSignal]
     }
   renderToDOM "#app" app.html
