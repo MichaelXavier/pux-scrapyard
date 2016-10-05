@@ -65,15 +65,16 @@ initialState = { nowState: Now.initialState
 
 navigation :: Html Action
 navigation =
-  nav
-    []
-    [ ul
-        []
-        [ li [] [link "/now" [] [ text "Now"]]
-        , li [] [link "/counter" [] [ text "Counter"]]
-        , li [] [link "/list" [] [ text "List"]]
-        ]
-    ]
+  nav # do
+    ul # do
+      li # do
+        link "/now" # text "Now"
+      li # do
+        link "/counter" # text "Counter"
+      li # do
+        link "/list" # text "List"
+  where
+    bind = H.bind
 
 update :: forall eff. Action -> State -> EffModel State Action (ajax :: AJAX | eff)
 update (PageView r) s = noEffects (s { currentRoute = r})
@@ -85,16 +86,16 @@ update (CounterAction a) s = noEffects (s { counterState = Counter.update a s.co
 update (ListAction a) s = noEffects (s { listState = List.update a s.listState })
 
 
-
 view :: State -> Html Action
 view s =
   div
-    [className "component"]
-    [ navigation
-    , page s.currentRoute
-    ]
+    ! className "component"
+    # do
+      navigation
+      page s.currentRoute
   where
     page NowR = map NowAction (Now.view s.nowState)
     page CounterR = map CounterAction (Counter.view s.counterState)
     page ListR = map ListAction (List.view s.listState)
     page NotFoundR = text "Not found!"
+    bind = H.bind
