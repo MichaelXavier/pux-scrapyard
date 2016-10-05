@@ -15,6 +15,7 @@ import Data.Maybe (Maybe(Just, Nothing))
 import Data.Monoid (mempty)
 import Prelude (otherwise, (+), show, const, (<>), (<<<), map, ($), (==))
 import Pux.Html (li, ol, button, text, (##), (#), (!), div, Html)
+import Pux.Html as H
 import Pux.Html.Attributes (className)
 import Pux.Html.Events (onClick)
 -------------------------------------------------------------------------------
@@ -50,12 +51,13 @@ update (ItemAction id a) s = s { items = M.update go id s.items }
 -- item -> Html action
 view :: State -> Html Action
 view s = div
-  [className "component"]
-  [ text "list"
-  , items
-  , addItem
-  ]
+  ! className "component"
+  # do
+    text "list"
+    items
+    addItem
   where
+    bind = H.bind
     curId = s.id
     items = ol
       []
