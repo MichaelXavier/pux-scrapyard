@@ -52,6 +52,7 @@ data Action = RequestNow
 
 
 -------------------------------------------------------------------------------
+--TODO: use mapState, mapEffects and friends
 update :: forall eff. Action -> State -> EffModel State Action (ajax :: AJAX | eff)
 update (ReceiveNow (Left e)) s =
   noEffects (s { status = e})
