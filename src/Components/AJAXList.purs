@@ -1,22 +1,20 @@
 module Components.AJAXList
     ( State(..)
-    , AJAXListItem(..)
-    , ItemStatus(..)
-    , ListStatus(..)
+    , Status(..)
     , initialState
     , Action(..)
-    , ItemAction(..)
     , update
     , view
     ) where
 
 
 -------------------------------------------------------------------------------
+import Components.AJAXListItem as AJAXListItem
 import Data.Array as A
 import Data.Map as M
 import Pux.Html as H
 import Control.Monad.Aff (attempt)
-import Data.Argonaut ((.?), class DecodeJson, decodeJson)
+import Data.Argonaut (decodeJson)
 import Data.Either (Either(Right, Left), either)
 import Data.Maybe (Maybe(Just, Nothing))
 import Data.Monoid ((<>), mempty)
@@ -31,49 +29,14 @@ import Pux.Html.Events (onClick)
 
 
 type State = {
-      items :: M.Map Int AJAXListItem
-    , status :: ListStatus
+      items :: M.Map Int AJAXListItem.State
+    , status :: Status
     }
 
-data ListStatus = ListNotFetched
-                | ListFetching
-                | ListFetched
-                | ListFetchError String
-
-
-type AJAXListItem = {
-      text :: String
-    , newText :: Maybe String
-    , status :: ItemStatus
-    , id :: Int
-    }
-
-newtype RawAJAXListItem = RawAJAXListItem {
-      text :: String
-    , id :: Int
-    }
-
-
-instance decodeJsonRawAJAXListItem :: DecodeJson RawAJAXListItem where
-  decodeJson json = do
-    obj <- decodeJson json
-    t <- obj .? "text"
-    i <- obj .? "id"
-    pure (RawAJAXListItem {text: t, id: i})
-
-
-fromRawAJAXListItem :: RawAJAXListItem -> AJAXListItem
-fromRawAJAXListItem (RawAJAXListItem i) = {
-      text: i.text
-    , newText: Nothing
-    , status: ItemCreated
-    , id: i.id
-    }
-
-
-data ItemStatus = ItemCreated
-                | ItemDeleting
-                | ItemDeleted
+data Status = ListNotFetched
+            | ListFetching
+            | ListFetched
+            | ListFetchError String
 
 
 initialState :: State
@@ -81,16 +44,13 @@ initialState = { items: mempty, status: ListNotFetched }
 
 
 data Action = RefreshList
-            | ReceiveList (Either String (M.Map Int AJAXListItem))
-            | ItemAction Int ItemAction
-
-
-data ItemAction = DeleteItem
+            | ReceiveList (Either String (M.Map Int AJAXListItem.State))
+            | ItemAction Int AJAXListItem.Action
 
 
 mapItemsById
-    :: Array AJAXListItem
-    -> M.Map Int AJAXListItem
+    :: Array AJAXListItem.State
+    -> M.Map Int AJAXListItem.State
 mapItemsById = M.fromFoldable <<< map toPair
   where
     toPair i = Tuple i.id i
@@ -106,20 +66,15 @@ update RefreshList s = {
     , effects: [do
       res <- attempt (get "/items.json")
       let decode reply = decodeJson reply.response
-      let t = either (Left <<< show) (map (mapItemsById <<< (map fromRawAJAXListItem)) <<< decode) res
+      let t = either (Left <<< show) (map (mapItemsById <<< (map AJAXListItem.fromRawState)) <<< decode) res
       pure (ReceiveList t)
       ]
     }
 -- TODO: yikes! actually get a failed pattern match where it tries to match a DeleteItem to a ItemAction i DeleteItem, pux bug?
 update (ItemAction id a) s = noEffects s { items = M.update updateItem' id s.items}
   where
-    updateItem' { status: ItemDeleted} = Nothing
-    updateItem' itemStatus = Just (updateItem a itemStatus)
-
-
---TODO: ajax to actually delete from server
-updateItem :: ItemAction -> AJAXListItem -> AJAXListItem
-updateItem DeleteItem i = i { status = ItemDeleting }
+    updateItem' { status: AJAXListItem.ItemDeleted} = Nothing
+    updateItem' itemStatus = Just (AJAXListItem.update a itemStatus)
 
 
 --TODO: how do we do an initial load
@@ -145,16 +100,4 @@ view s = div
       (A.fromFoldable (map viewItem' (M.values s.items)))
     viewItem' i = li
       # do
-        map (ItemAction i.id) (viewItem i)
-
-
---TODO: more detail
-viewItem :: AJAXListItem -> Html ItemAction
-viewItem { status: ItemDeleting } = text "Deleting..."
-viewItem i = do
-  text i.text
-  button
-    ! onClick (const DeleteItem)
-    # text "Delete"
-  where
-    bind = H.bind
+        map (ItemAction i.id) (AJAXListItem.view i)
