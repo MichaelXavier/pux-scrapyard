@@ -18,7 +18,7 @@ import Pux.Html as H
 import Control.Monad.Aff (attempt)
 import Data.Argonaut ((.?), class DecodeJson, decodeJson)
 import Data.Either (Either(Right, Left), either)
-import Data.Maybe (Maybe(Nothing))
+import Data.Maybe (Maybe(Just, Nothing))
 import Data.Monoid ((<>), mempty)
 import Data.Tuple (Tuple(Tuple))
 import Network.HTTP.Affjax (AJAX, get)
@@ -110,7 +110,16 @@ update RefreshList s = {
       pure (ReceiveList t)
       ]
     }
-update (ItemAction id a) s = noEffects s
+-- TODO: yikes! actually get a failed pattern match where it tries to match a DeleteItem to a ItemAction i DeleteItem, pux bug?
+update (ItemAction id a) s = noEffects s { items = M.update updateItem' id s.items}
+  where
+    updateItem' { status: ItemDeleted} = Nothing
+    updateItem' itemStatus = Just (updateItem a itemStatus)
+
+
+--TODO: ajax to actually delete from server
+updateItem :: ItemAction -> AJAXListItem -> AJAXListItem
+updateItem DeleteItem i = i { status = ItemDeleting }
 
 
 --TODO: how do we do an initial load
@@ -141,4 +150,11 @@ view s = div
 
 --TODO: more detail
 viewItem :: AJAXListItem -> Html ItemAction
-viewItem i = text i.text
+viewItem { status: ItemDeleting } = text "Deleting..."
+viewItem i = do
+  text i.text
+  button
+    ! onClick (const DeleteItem)
+    # text "Delete"
+  where
+    bind = H.bind

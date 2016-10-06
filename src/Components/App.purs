@@ -88,7 +88,6 @@ navigation =
 
 
 --TODO: can probably use some of the state helpers
--- is there such a thing as an effect that fires an action?
 update :: forall eff. Action -> State -> EffModel State Action (ajax :: AJAX | eff)
 update (PageView r) s =
   { state: s { currentRoute = r}

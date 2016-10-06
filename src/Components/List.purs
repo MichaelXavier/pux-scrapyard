@@ -41,11 +41,8 @@ update (AddItem a) s = s { items = M.insert s.id (ListItem.initialState s.id a) 
 update (ItemAction id a) s = s { items = M.update go id s.items }
   where
     go itemState
-      | itemState.id == id = go' (ListItem.update a itemState)
-      | otherwise          = go' itemState
-    go' itemState
       | itemState.deleted = Nothing
-      | otherwise         = Just itemState
+      | otherwise         = Just (ListItem.update a itemState )
 
 
 -- item -> Html action
