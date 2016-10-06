@@ -18,8 +18,10 @@ import Pux.Html as H
 import Control.Alt ((<|>))
 import Data.Functor ((<$), map)
 import Data.Maybe (fromMaybe)
+import Data.Monoid (mempty)
 import Network.HTTP.Affjax (AJAX)
-import Pux (noEffects, EffModel)
+import Prelude (pure)
+import Pux (EffModel, noEffects)
 import Pux.Html (text, li, ul, nav, (#), div, (!), Html)
 import Pux.Html.Attributes (className)
 import Pux.Router (link, lit, end, router)
@@ -86,8 +88,16 @@ navigation =
 
 
 --TODO: can probably use some of the state helpers
+-- is there such a thing as an effect that fires an action?
 update :: forall eff. Action -> State -> EffModel State Action (ajax :: AJAX | eff)
-update (PageView r) s = noEffects (s { currentRoute = r})
+update (PageView r) s =
+  { state: s { currentRoute = r}
+    -- refresh the initial state on nav. note that this could lose data in the ajax list case so it may not be a good idea
+  , effects: case r of
+     AJAXListR -> [pure (AJAXListAction AJAXList.RefreshList)]
+     NowR -> [pure (NowAction Now.RequestNow)]
+     _ -> mempty
+  }
 update (NowAction a) s =
   let eff = Now.update a s.nowState
   in { state: s { nowState = eff.state}

@@ -14,6 +14,7 @@ module Components.AJAXList
 -------------------------------------------------------------------------------
 import Data.Array as A
 import Data.Map as M
+import Pux.Html as H
 import Control.Monad.Aff (attempt)
 import Data.Argonaut ((.?), class DecodeJson, decodeJson)
 import Data.Either (Either(Right, Left), either)
@@ -21,11 +22,11 @@ import Data.Maybe (Maybe(Nothing))
 import Data.Monoid ((<>), mempty)
 import Data.Tuple (Tuple(Tuple))
 import Network.HTTP.Affjax (AJAX, get)
-import Prelude (pure, show, (<<<), map, bind)
+import Prelude (const, pure, show, (<<<), map, bind)
 import Pux (noEffects, EffModel)
-import Pux.Html (text, (!), li, ol, (#), div, Html)
-import Pux.Html as H
+import Pux.Html (button, text, (!), li, ol, (#), div, Html)
 import Pux.Html.Attributes (className)
+import Pux.Html.Events (onClick)
 -------------------------------------------------------------------------------
 
 
@@ -99,11 +100,11 @@ update :: forall eff. Action -> State -> EffModel State Action (ajax :: AJAX | e
 update (ReceiveList (Left e)) s =
   noEffects (s { status = ListFetchError e})
 update (ReceiveList (Right items)) s =
-  noEffects (s { items = items})
+  noEffects (s { items = items, status = ListFetched})
 update RefreshList s = {
       state: s { status = ListFetching }
     , effects: [do
-      res <- attempt (get "/now.json")
+      res <- attempt (get "/items.json")
       let decode reply = decodeJson reply.response
       let t = either (Left <<< show) (map (mapItemsById <<< (map fromRawAJAXListItem)) <<< decode) res
       pure (ReceiveList t)
@@ -118,6 +119,7 @@ view s = div
   ! className "component"
   # do
     items
+    button ! onClick (const RefreshList) # text "Refresh"
   where
     bind = H.bind
     items = case s.status of
