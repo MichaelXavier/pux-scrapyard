@@ -32,15 +32,18 @@ initialState = { items: mempty, id: 0 }
 
 
 data Action = AddItem String
-            | ItemAction Int ListItem.Action -- uhh, this seems...weird
+            | ItemAction Int ListItem.Action
 
 
+--FIXME: this is actually broken!
 update :: Action -> State -> State
 update (AddItem a) s = s { items = M.insert s.id (ListItem.initialState s.id a) s.items
                          , id = s.id + 1}
 update (ItemAction id a) s = s { items = M.update go id s.items }
   where
-    go itemState
+    -- apply the item state change first and then deal with it
+    go itemState = go' (ListItem.update a itemState)
+    go' itemState
       | itemState.deleted = Nothing
       | otherwise         = Just (ListItem.update a itemState )
 

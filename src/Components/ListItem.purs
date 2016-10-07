@@ -24,8 +24,7 @@ type State = {
     , id :: Int
     }
 
-data Action = Nop
-            | Delete
+data Action =  Delete
             | Edit String
             | CancelEdit
             | SaveEdit
@@ -39,7 +38,6 @@ initialState id text = { text: text
                        }
 
 update :: Action -> State -> State
-update Nop s                        = s
 update Delete s                     = s { deleted = true }
 update (Edit newText) s             = s { newText = Just newText }
 update CancelEdit s                 = s { newText = Nothing }
