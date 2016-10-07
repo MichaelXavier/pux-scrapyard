@@ -93,7 +93,7 @@ update (PageView r) s =
   { state: s { currentRoute = r}
     -- refresh the initial state on nav. note that this could lose data in the ajax list case so it may not be a good idea
   , effects: case r of
-     AJAXListR -> [pure (AJAXListAction AJAXList.RefreshList)]
+     --AJAXListR -> [pure (AJAXListAction AJAXList.RefreshList)]
      NowR -> [pure (NowAction Now.RequestNow)]
      _ -> mempty
   }

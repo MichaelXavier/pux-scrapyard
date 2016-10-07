@@ -1,6 +1,7 @@
 module Components.AJAXListItem
     ( State(..)
     , RawState(..)
+    , initialState
     , fromRawState
     , Status(..)
     , Action(..)
@@ -25,6 +26,9 @@ type State = {
     , status :: Status
     , id :: Int
     }
+
+initialState :: Int -> String -> State
+initialState id text = {text: text, newText: Nothing, status: ItemCreated, id: id}
 
 newtype RawState = RawState {
       text :: String
