@@ -32,7 +32,7 @@ newtype RawState = RawState {
     }
 
 
-data Action = DeleteItem
+data Action = DeleteAJAXItem
 
 
 instance decodeJsonRawAJAXListItem :: DecodeJson RawState where
@@ -60,7 +60,7 @@ data Status = ItemCreated
 
 --TODO: ajax to actually delete from server
 update :: Action -> State -> State
-update DeleteItem i = i { status = ItemDeleting }
+update DeleteAJAXItem i = i { status = ItemDeleting }
 
 
 
@@ -70,7 +70,7 @@ view { status: ItemDeleting } = text "Deleting..."
 view i = do
   text i.text
   button
-    ! onClick (const DeleteItem)
+    ! onClick (const DeleteAJAXItem)
     # text "Delete"
   where
     bind = H.bind
