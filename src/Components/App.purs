@@ -1,8 +1,8 @@
 module Components.App
     ( State(..)
-    , Route(..)
     , initialState
     , Action(..)
+    , Route(..)
     , update
     , view
     , match
@@ -35,6 +35,13 @@ data Route = NowR
            | NotFoundR
 
 
+data Action = PageView Route
+            | NowAction Now.Action
+            | CounterAction Counter.Action
+            | ListAction List.Action
+            | AJAXListAction AJAXList.Action
+
+
 -- works with piped in routing signal
 match :: String -> Action
 match url = PageView parse
@@ -45,15 +52,10 @@ match url = PageView parse
           <|> CounterR <$ lit "counter"
           <|> ListR <$ lit "list"
           <|> AJAXListR <$ lit "ajax-list"
-    defRoute = NowR
 
 
-
-data Action = PageView Route
-            | NowAction Now.Action
-            | CounterAction Counter.Action
-            | ListAction List.Action
-            | AJAXListAction AJAXList.Action
+defRoute :: Route
+defRoute = NowR
 
 
 type State = {
@@ -71,8 +73,25 @@ initialState = { nowState: Now.initialState
                , counterState: Counter.initialState
                , listState: List.initialState
                , ajaxListState: AJAXList.initialState
-               , currentRoute: AJAXListR
+               , currentRoute: defRoute
                }
+
+
+-- adding nav works
+navigation :: Html Action
+navigation =
+  nav # do
+    ul # do
+      li # do
+        link "/now" # text "Now"
+      li # do
+        link "/counter" # text "Counter"
+      li # do
+        link "/list" # text "List"
+      li # do
+        link "/ajax-list" # text "AJAX List"
+  where
+    bind = H.bind
 
 
 --TODO: can probably use some of the state helpers
@@ -117,18 +136,3 @@ view s =
     page NotFoundR = text "Not found!"
 
 
--- adding nav works
-navigation :: Html Action
-navigation =
-  nav # do
-    ul # do
-      li # do
-        link "/now" # text "Now"
-      li # do
-        link "/counter" # text "Counter"
-      li # do
-        link "/list" # text "List"
-      li # do
-        link "/ajax-list" # text "AJAX List"
-  where
-    bind = H.bind
