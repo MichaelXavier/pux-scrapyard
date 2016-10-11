@@ -27,10 +27,12 @@ main
                        | eff) Unit
 main = do
   --todo constant signal for ajax refreshes
+  urlSignal <- sampleUrl
+  let routeSignal = urlSignal ~> App.match
   app <- start
     { initialState: App.initialState
     , update: App.update
     , view: App.view
-    , inputs: []
+    , inputs: [routeSignal]
     }
   renderToDOM "#app" app.html
