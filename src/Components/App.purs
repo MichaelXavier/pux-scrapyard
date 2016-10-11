@@ -45,7 +45,7 @@ match url = PageView parse
           <|> CounterR <$ lit "counter"
           <|> ListR <$ lit "list"
           <|> AJAXListR <$ lit "ajax-list"
-    defRoute = AJAXListR
+    defRoute = NowR
 
 
 
