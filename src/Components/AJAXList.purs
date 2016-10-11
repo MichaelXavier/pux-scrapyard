@@ -46,9 +46,10 @@ initialState = { items: M.singleton 0 (AJAXListItem.initialState 0 "sample"), st
 
 -- data Action = RefreshList
 --             | ReceiveList (Either String (M.Map Int AJAXListItem.State))
---             | ItemAction Int AJAXListItem.Action
+--             | AJAXItemAction Int AJAXListItem.Action
 
-data Action = ItemAction Int AJAXListItem.Action
+data Action = AJAXItemAction Int AJAXListItem.Action
+            -- | Nop
 
 
 
@@ -74,11 +75,12 @@ update :: forall eff. Action -> State -> EffModel State Action (ajax :: AJAX | e
 --       pure (ReceiveList t)
 --       ]
 --     }
--- TODO: yikes! actually get a failed pattern match where it tries to match a DeleteItem to a ItemAction i DeleteItem, pux bug?
-update (ItemAction id a) s = noEffects s { items = M.update updateItem' id s.items}
+-- TODO: yikes! actually get a failed pattern match where it tries to match a DeleteItem to a AJAXItemAction i DeleteItem, pux bug?
+update (AJAXItemAction id a) s = noEffects s { items = M.update updateItem' id s.items}
   where
     updateItem' { status: AJAXListItem.ItemDeleted} = Nothing
     updateItem' itemStatus = Just (AJAXListItem.update a itemStatus)
+-- update Nop s = noEffects s
 
 
 --TODO: how do we do an initial load
@@ -105,4 +107,4 @@ view s = div
       (A.fromFoldable (map viewItem' (M.values s.items)))
     viewItem' i = li
       # do
-        map (ItemAction i.id) (AJAXListItem.view i)
+        map (AJAXItemAction i.id) (AJAXListItem.view i)
