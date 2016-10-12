@@ -23,7 +23,7 @@ import Data.Tuple (Tuple(Tuple))
 import Network.HTTP.Affjax (AJAX, get)
 import Prelude (otherwise, (==), const, pure, show, (<<<), map, bind)
 import Pux (noEffects, EffModel)
-import Pux.Html (button, text, (!), li, ol, (#), div, Html)
+import Pux.Html ((##), button, text, (!), li, ol, (#), div, Html)
 import Pux.Html.Attributes (className)
 import Pux.Html.Events (onClick)
 -------------------------------------------------------------------------------
@@ -117,28 +117,26 @@ update Nop s = s -- is it order dependent?
 --SO ITS AJAX, commenting ou t refresh button and the other actions fixes it
 --TODO: how do we do an initial load
 view :: State -> Html Action
-view s = div
-  ! className "component"
-  # do
-    items
+view s = div !
+  className "component" ##
+  items
     --button ! onClick (const RefreshList) # text "Refresh"
   where
-    bind = H.bind
     items = case s.status of
       --ListNotFetched -> text "Not fetched"
-      ListNotFetched -> items'
-      ListFetching -> do
-        text "Fetching"
-        items'
-      ListFetched -> items'
-      ListFetchError e -> do
-        text ("Error: " <> e)
-        items'
+      ListNotFetched -> [items']
+      ListFetching -> [ text "Fetching"
+                      , items'
+                      ]
+      ListFetched -> [items']
+      ListFetchError e -> [ text ("Error: " <> e)
+                          , items'
+                          ]
     items' = ol
       []
       (A.fromFoldable (map viewItem' (M.values s.items)))
     viewItem' i = li
-      # do
+      #
         -- map (AJAXItemAction i.id) (AJAXListItem.view i)
         map AJAXItemAction (AJAXListItem.view i)
         -- is it the naming with list?

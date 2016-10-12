@@ -11,9 +11,6 @@ module Components.App
 
 -------------------------------------------------------------------------------
 import Components.AJAXList as AJAXList
--- import Components.Counter as Counter
--- import Components.List as List
--- import Components.Now as Now
 import Pux.Html as H
 import Control.Alt ((<|>))
 import Data.Functor ((<$), map)
@@ -22,7 +19,7 @@ import Data.Monoid (mempty)
 import Network.HTTP.Affjax (AJAX)
 import Prelude (pure)
 import Pux (EffModel, noEffects)
-import Pux.Html (text, li, ul, nav, (#), div, (!), Html)
+import Pux.Html ((##), text, li, ul, nav, (#), div, (!), Html)
 import Pux.Html.Attributes (className)
 import Pux.Router (link, lit, end, router)
 -------------------------------------------------------------------------------
@@ -71,21 +68,20 @@ initialState = { -- nowState: Now.initialState
                , currentRoute: NowR
                }
 
-
+-- can i use # for single item trees
 navigation :: Html Action
 navigation =
-  nav # do
-    ul # do
-      li # do
-        link "/now" # text "Now"
-      li # do
-        link "/counter" # text "Counter"
-      li # do
-        link "/list" # text "List"
-      li # do
-        link "/ajax-list" # text "AJAX List"
-  where
-    bind = H.bind
+  nav #
+    ul ##
+      [ li #
+          link "/now" # text "Now"
+      , li #
+          link "/counter" # text "Counter"
+      , li #
+          link "/list" # text "List"
+      , li #
+          link "/ajax-list" # text "AJAX List"
+      ]
 
 
 --TODO: can probably use some of the state helpers
@@ -117,15 +113,13 @@ update (AJAXListAction a) s = noEffects (s { ajaxListState = AJAXList.update a s
 --TODO: maybe request data on page change?
 view :: State -> Html Action
 view s =
-  div
-    ! className "component"
-    # do
-      -- navigation
-      page s.currentRoute
+  div !
+    className "component" ##
+    [ page s.currentRoute --TODO: add back navigation
+    ]
   where
     -- page NowR = map NowAction (Now.view s.nowState)
     -- page CounterR = map CounterAction (Counter.view s.counterState)
     -- page ListR = map ListAction (List.view s.listState)
     page AJAXListR = map AJAXListAction (AJAXList.view s.ajaxListState)
     page _ = text "Not found!"
-    bind = H.bind

@@ -14,7 +14,7 @@ import Pux.Html as H
 import Data.Argonaut ((.?), decodeJson, class DecodeJson)
 import Data.Maybe (Maybe(Nothing))
 import Prelude (const, pure, bind)
-import Pux.Html ((#), (!), button, text, Html)
+import Pux.Html (div, (##), (#), (!), button, text, Html)
 import Pux.Html.Events (onClick)
 -------------------------------------------------------------------------------
 
@@ -67,10 +67,9 @@ update DeleteAJAXItem i = i { status = ItemDeleting }
 --TODO: more detail
 view :: State -> Html Action
 view { status: ItemDeleting } = text "Deleting..."
-view i = do
-  text i.text
-  button
-    ! onClick (const DeleteAJAXItem)
-    # text "Delete"
-  where
-    bind = H.bind
+view i = div ##
+  [ text i.text
+  , button !
+      onClick (const DeleteAJAXItem) #
+      text "Delete"
+  ]
