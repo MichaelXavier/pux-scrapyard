@@ -9,6 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "pulp browserify --to output/index.js",
+    "watch": "pulp --watch browserify --to output/index.js",
     "server": "node server.js"
   },
   "author": "Michael Xavier",
