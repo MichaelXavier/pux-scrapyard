@@ -10,7 +10,6 @@ module Components.AJAXListItem
 
 
 -------------------------------------------------------------------------------
-import Pux.Html as H
 import Data.Argonaut ((.?), decodeJson, class DecodeJson)
 import Data.Maybe (Maybe(Nothing))
 import Prelude (const, pure, bind)
