@@ -11,16 +11,16 @@ module Components.App
 
 -------------------------------------------------------------------------------
 import Components.AJAXList as AJAXList
-import Components.Now as Now
 import Components.Counter as Counter
 import Components.List as List
+import Components.Now as Now
 import Control.Alt ((<|>))
 import Data.Functor ((<$), map)
 import Data.Maybe (fromMaybe)
 import Data.Monoid (mempty)
 import Network.HTTP.Affjax (AJAX)
 import Prelude (pure)
-import Pux (EffModel, noEffects)
+import Pux (mapEffects, mapState, EffModel, noEffects)
 import Pux.Html ((##), text, li, ul, nav, (#), div, (!), Html)
 import Pux.Html.Attributes (className)
 import Pux.Router (link, lit, end, router)
@@ -86,7 +86,6 @@ navigation =
       ]
 
 
---TODO: can probably use some of the state helpers
 update :: forall eff. Action -> State -> EffModel State Action (ajax :: AJAX | eff)
 update (PageView r) s =
   { state: s { currentRoute = r}
@@ -97,18 +96,12 @@ update (PageView r) s =
      _ -> mempty
   }
 update (NowAction a) s =
-  let eff = Now.update a s.nowState
-  in { state: s { nowState = eff.state}
-     , effects: map (map NowAction) eff.effects}
+  mapState (\ns -> s { nowState = ns}) (mapEffects NowAction (Now.update a s.nowState))
 update (CounterAction a) s = noEffects (s { counterState = Counter.update a s.counterState })
 update (ListAction a) s = noEffects (s { listState = List.update a s.listState })
--- is this the issue?
--- IS IT THE PATTERN MATCH ORDER SERIOUSLY WHAT THE FUCK
 update (AJAXListAction a) s =
-  let eff = AJAXList.update a s.ajaxListState
-  in { state: s { ajaxListState = eff.state}
-     , effects: map (map AJAXListAction) eff.effects
-     }
+  mapState (\as -> s { ajaxListState = as})
+           (mapEffects AJAXListAction (AJAXList.update a s.ajaxListState))
 
 
 --TODO: maybe request data on page change?

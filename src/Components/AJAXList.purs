@@ -20,7 +20,7 @@ import Data.Monoid ((<>), mempty)
 import Data.Tuple (Tuple(Tuple))
 import Network.HTTP.Affjax (AJAX, get)
 import Prelude (map, pure, show, bind, (<<<))
-import Pux (noEffects, EffModel)
+import Pux (mapState, mapEffects, noEffects, EffModel)
 import Pux.Html (Html, div, li, ol, text, (##), (!), (#))
 import Pux.Html.Attributes (className)
 -------------------------------------------------------------------------------
@@ -69,22 +69,18 @@ update RefreshList s = {
       ]
     }
 update (AJAXItemAction id a) s = case M.lookup id s.items of
-  Just itemState -> let eff = AJAXListItem.update a itemState
-                    in { state: s { items = M.insert id eff.state s.items}
-                       , effects: map (map (AJAXItemAction id)) eff.effects
-                       }
+  Just itemState -> mapState (\is -> s { items = M.insert id is s.items})
+                             (mapEffects (AJAXItemAction id) (AJAXListItem.update a itemState))
   Nothing -> noEffects s
   where
     go { status: AJAXListItem.ItemDeleted} = Nothing
     go itemState = Just (AJAXListItem.update a itemState)
 
 
---SO ITS AJAX, commenting ou t refresh button and the other actions fixes it
 view :: State -> Html Action
 view s = div !
   className "component" ##
   items
-    --button ! onClick (const RefreshList) # text "Refresh"
   where
     items = case s.status of
       ListNotFetched -> [text "Not fetched"]
