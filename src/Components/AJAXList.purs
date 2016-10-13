@@ -68,14 +68,18 @@ update RefreshList s = {
       pure (ReceiveList t)
       ]
     }
-update (AJAXItemAction id a) s = noEffects s { items = M.update go id s.items}
+update (AJAXItemAction id a) s = case M.lookup id s.items of
+  Just itemState -> let eff = AJAXListItem.update a itemState
+                    in { state: s { items = M.insert id eff.state s.items}
+                       , effects: map (map (AJAXItemAction id)) eff.effects
+                       }
+  Nothing -> noEffects s
   where
     go { status: AJAXListItem.ItemDeleted} = Nothing
     go itemState = Just (AJAXListItem.update a itemState)
 
 
 --SO ITS AJAX, commenting ou t refresh button and the other actions fixes it
---TODO: how do we do an initial load
 view :: State -> Html Action
 view s = div !
   className "component" ##

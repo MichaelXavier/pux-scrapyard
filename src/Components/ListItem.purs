@@ -8,10 +8,10 @@ module Components.ListItem
 
 
 -------------------------------------------------------------------------------
-import Pux.Html as H
 import Data.Maybe (maybe, Maybe(Just, Nothing))
+import Data.Monoid ((<>))
 import Prelude (const)
-import Pux.Html (input, button, (#), (!), div, text, Html)
+import Pux.Html ((##), input, button, (#), (!), div, text, Html)
 import Pux.Html.Attributes (defaultValue, className)
 import Pux.Html.Events (onKeyUp, onClick)
 -------------------------------------------------------------------------------
@@ -24,7 +24,7 @@ type State = {
     , id :: Int
     }
 
-data Action =  Delete
+data Action = Delete
             | Edit String
             | CancelEdit
             | SaveEdit
@@ -48,27 +48,28 @@ update SaveEdit s                   = s
 
 
 view :: State -> Html Action
-view s = div ! className "component" # do
-  textContent
-  button
-    ! onClick (const Delete)
-    # text "Delete"
+view s = div ! className "component" ##
+  textContent <>
+  [ button !
+      onClick (const Delete) #
+      text "Delete"]
   where
-    bind = H.bind
     textContent = maybe displayCurrent displayEdit s.newText
-    displayCurrent = do
+    displayCurrent = [
       text s.text
-      button
+    , button
         ! onClick (const (Edit s.text))
         # text "Edit"
-    displayEdit newText = do
+    ]
+    displayEdit newText = [
       editInput newText
-      button
+    , button
         ! onClick (const CancelEdit)
         # text "Cancel"
-      button
+    , button
         ! onClick (const SaveEdit)
         # text "Save"
+    ]
     editInput newText = input
       [ defaultValue newText
       , onKeyUp (\e -> Edit e.target.value)

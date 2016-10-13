@@ -11,10 +11,14 @@ module Components.AJAXListItem
 
 -------------------------------------------------------------------------------
 import Data.Argonaut ((.?), decodeJson, class DecodeJson)
-import Data.Maybe (Maybe(Nothing))
+import Data.Maybe (maybe, Maybe(Just, Nothing))
+import Data.Monoid ((<>))
+import Network.HTTP.Affjax (AJAX)
 import Prelude (const, pure, bind)
-import Pux.Html (div, (##), (#), (!), button, text, Html)
-import Pux.Html.Events (onClick)
+import Pux (noEffects, EffModel)
+import Pux.Html (input, div, (##), (#), (!), button, text, Html)
+import Pux.Html.Attributes (defaultValue)
+import Pux.Html.Events (onKeyUp, onClick)
 -------------------------------------------------------------------------------
 
 
@@ -31,7 +35,10 @@ newtype RawState = RawState {
     }
 
 
-data Action = DeleteAJAXItem
+data Action = Delete
+            | Edit String
+            | CancelEdit
+            | SaveEdit
 
 
 instance decodeJsonRawAJAXListItem :: DecodeJson RawState where
@@ -58,17 +65,50 @@ data Status = ItemCreated
 
 
 --TODO: ajax to actually delete from server
-update :: Action -> State -> State
-update DeleteAJAXItem i = i { status = ItemDeleting }
+update :: forall eff. Action -> State -> EffModel State Action (ajax :: AJAX | eff)
+update Delete i =
+  noEffects (i { status = ItemDeleting })
+update (Edit newText) s =
+  noEffects (s { newText = Just newText })
+update CancelEdit s =
+  noEffects (s { newText = Nothing })
+--TODO: ajax request ,put into saving
+update SaveEdit s@{newText: Just t} = noEffects
+  s { text = t
+    , newText = Nothing
+    }
+update SaveEdit s =
+  noEffects s
 
 
-
---TODO: more detail
 view :: State -> Html Action
 view { status: ItemDeleting } = text "Deleting..."
-view i = div ##
-  [ text i.text
-  , button !
-      onClick (const DeleteAJAXItem) #
+view s = div ##
+  textContent <>
+  [ button !
+      onClick (const Delete) #
       text "Delete"
   ]
+  where
+    textContent = maybe displayCurrent displayEdit s.newText
+    displayCurrent = [
+      text s.text
+    , button
+        ! onClick (const (Edit s.text))
+        # text "Edit"
+    ]
+    displayEdit newText = [
+      editInput newText
+    , button
+        ! onClick (const CancelEdit)
+        # text "Cancel"
+    , button
+        ! onClick (const SaveEdit)
+        # text "Save"
+    ]
+    editInput newText = input
+      [ defaultValue newText
+      , onKeyUp (\e -> Edit e.target.value)
+      ]
+      []
+
