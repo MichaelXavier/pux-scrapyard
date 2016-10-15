@@ -11,12 +11,12 @@ module Resources.AJAXList
 
 -------------------------------------------------------------------------------
 import Control.Monad.Aff (attempt, Aff)
-import Data.Argonaut ((~>), (:=), class EncodeJson, (.?), decodeJson, class DecodeJson)
+import Data.Argonaut (encodeJson, (~>), (:=), class EncodeJson, (.?), decodeJson, class DecodeJson)
 import Data.Bifunctor (bimap)
-import Data.Either (either, Either(Right, Left))
+import Data.Either (either, Either(Left))
 import Data.Monoid ((<>))
-import Network.HTTP.Affjax (delete_, get, AJAX)
-import Prelude (map, Unit, unit, pure, show, bind, (<<<))
+import Network.HTTP.Affjax (put_, delete_, get, AJAX)
+import Prelude (Unit, show, map, pure, bind, (<<<))
 -------------------------------------------------------------------------------
 
 type ItemId = Int
@@ -58,4 +58,5 @@ deleteItem (RawListItem i) =
 
 -------------------------------------------------------------------------------
 updateItem :: forall eff. RawListItem -> Aff ( ajax :: AJAX | eff) (Either String Unit)
-updateItem _ = pure (Right unit) --TODO
+updateItem r@(RawListItem i) =
+  map (bimap show _.response) (attempt (put_ ("/items/" <> show i.id <> ".json") (encodeJson r)))

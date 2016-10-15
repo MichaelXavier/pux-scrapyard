@@ -31,6 +31,7 @@ type State = {
 
 data Action = Delete
             | ReceiveDelete (Either String Unit)
+            | ReceiveUpdate (Either String Unit)
             | Edit String
             | CancelEdit
             | SaveEdit
@@ -60,6 +61,8 @@ data Status = ItemCreated
 update :: forall eff. Action -> State -> EffModel State Action (ajax :: AJAX | eff)
 update (ReceiveDelete (Left _)) s = noEffects s --TODO: display error
 update (ReceiveDelete (Right _)) s = noEffects (s { status = ItemDeleted})
+update (ReceiveUpdate (Left _)) s = noEffects s --TODO: display error
+update (ReceiveUpdate (Right _)) s = noEffects (s { status = ItemCreated})
 update Delete s = {
     state: s { status = ItemDeleting }
   , effects: [map ReceiveDelete (ListR.deleteItem (toRawState s))]
@@ -69,15 +72,20 @@ update (Edit newText) s =
 update CancelEdit s =
   noEffects (s { newText = Nothing })
 --TODO: ajax request ,put into saving
-update SaveEdit s@{newText: Just t} = noEffects $
-  s { text = t
-    , newText = Nothing
-    }
+update SaveEdit s@{newText: Just t} = {
+    state: s'
+  , effects: [map ReceiveUpdate (ListR.updateItem (toRawState s'))]
+  }
+  where
+    s' = s {
+        text = t
+      , newText = Nothing
+      , status = ItemDirty
+      }
 update SaveEdit s = noEffects (s { status = ItemDirty })
 
 
 view :: State -> Html Action
-view { status: ItemDeleting } = text "Deleting..."
 view s = div ##
   textContent <>
   [ button !
@@ -86,12 +94,16 @@ view s = div ##
   ]
   where
     textContent = maybe displayCurrent displayEdit s.newText
-    displayCurrent = [
-      text s.text
-    , button
-        ! onClick (const (Edit s.text))
-        # text "Edit"
-    ]
+    displayCurrent = case s.status of
+      ItemDeleting -> [text "Deleting..."]
+      ItemDirty -> [text "Updating..."]
+      ItemDeleted -> []
+      _ -> [ text s.text
+           , button
+             ! onClick (const (Edit s.text))
+             # text "Edit"
+           ]
+
     displayEdit newText = [
       editInput newText
     , button

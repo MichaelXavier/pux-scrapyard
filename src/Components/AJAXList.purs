@@ -13,14 +13,12 @@ import Components.AJAXListItem as AJAXListItem
 import Data.Array as A
 import Data.Map as M
 import Resources.AJAXList as ListR
-import Control.Monad.Aff (Aff, attempt)
-import Data.Argonaut (decodeJson)
-import Data.Either (Either(Right, Left), either)
+import Data.Either (Either(Right, Left))
 import Data.Maybe (Maybe(Just, Nothing))
 import Data.Monoid ((<>), mempty)
 import Data.Tuple (Tuple(Tuple))
-import Network.HTTP.Affjax (AJAX, get)
-import Prelude (($), map, pure, show, bind, (<<<))
+import Network.HTTP.Affjax (AJAX)
+import Prelude (map, (<<<))
 import Pux (mapState, mapEffects, EffModel, noEffects)
 import Pux.Html (Html, div, li, ol, text, (##), (!), (#))
 import Pux.Html.Attributes (className)

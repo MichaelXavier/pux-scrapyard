@@ -26,6 +26,10 @@ app.get('/items.json', function(req, res) {
   res.json(items);
 });
 
+function parseID(s) {
+  return parseInt(s, 10);
+}
+
 app.post('/items.json', function(req, res) {
   var item = req.body;
   item.id = uid;
@@ -36,7 +40,7 @@ app.post('/items.json', function(req, res) {
 });
 
 app.get('/items/:id.json', function(req, res) {
-  var id = parseInt(req.params.id, 10);
+  var id = parseID(req.params.id);
   var item = items.find(function(x) { return x.id == id;});
   if (item) {
     res.json(item);
@@ -46,8 +50,20 @@ app.get('/items/:id.json', function(req, res) {
 });
 
 
+app.put('/items/:id.json', function(req, res) {
+  var id = parseID(req.params.id);
+  var item = items.find(function(x) { return x.id == id;});
+  if (item) {
+    item.text = req.body.text;
+    res.end();
+  } else {
+    res.status(404).end();
+  }
+});
+
+
 app.delete('/items/:id.json', function(req, res) {
-  var id = parseInt(req.params.id, 10);
+  var id = parseID(req.params.id);
   var idx = items.findIndex(function(x) { return x.id == id;});
   if (idx >= 0) {
     items.splice(idx, 1);
