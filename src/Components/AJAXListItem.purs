@@ -1,6 +1,5 @@
 module Components.AJAXListItem
     ( State(..)
-    , RawState(..)
     , fromRawState
     , Status(..)
     , Action(..)
@@ -10,11 +9,12 @@ module Components.AJAXListItem
 
 
 -------------------------------------------------------------------------------
-import Data.Argonaut ((.?), decodeJson, class DecodeJson)
+import Resources.AJAXList as ListR
+import Data.Either (Either(Right, Left))
 import Data.Maybe (maybe, Maybe(Just, Nothing))
 import Data.Monoid ((<>))
 import Network.HTTP.Affjax (AJAX)
-import Prelude (const, pure, bind)
+import Prelude (map, Unit, ($), const)
 import Pux (noEffects, EffModel)
 import Pux.Html (input, div, (##), (#), (!), button, text, Html)
 import Pux.Html.Attributes (defaultValue)
@@ -29,56 +29,51 @@ type State = {
     , id :: Int
     }
 
-newtype RawState = RawState {
-      text :: String
-    , id :: Int
-    }
-
-
 data Action = Delete
+            | ReceiveDelete (Either String Unit)
             | Edit String
             | CancelEdit
             | SaveEdit
 
 
-instance decodeJsonRawAJAXListItem :: DecodeJson RawState where
-  decodeJson json = do
-    obj <- decodeJson json
-    t <- obj .? "text"
-    i <- obj .? "id"
-    pure (RawState {text: t, id: i})
-
-
-fromRawState :: RawState -> State
-fromRawState (RawState i) = {
+fromRawState :: ListR.RawListItem -> State
+fromRawState (ListR.RawListItem i) = {
       text: i.text
     , newText: Nothing
     , status: ItemCreated
     , id: i.id
     }
 
+--TODO: shold probably gather up the server representation and API calls into a module
+toRawState :: State -> ListR.RawListItem
+toRawState s = ListR.RawListItem {text: s.text, id: s.id}
+
 
 data Status = ItemCreated
             | ItemDeleting
             | ItemDeleted
+            | ItemDirty
 
 
 
 --TODO: ajax to actually delete from server
 update :: forall eff. Action -> State -> EffModel State Action (ajax :: AJAX | eff)
-update Delete i =
-  noEffects (i { status = ItemDeleting })
+update (ReceiveDelete (Left _)) s = noEffects s --TODO: display error
+update (ReceiveDelete (Right _)) s = noEffects (s { status = ItemDeleted})
+update Delete s = {
+    state: s { status = ItemDeleting }
+  , effects: [map ReceiveDelete (ListR.deleteItem (toRawState s))]
+  }
 update (Edit newText) s =
   noEffects (s { newText = Just newText })
 update CancelEdit s =
   noEffects (s { newText = Nothing })
 --TODO: ajax request ,put into saving
-update SaveEdit s@{newText: Just t} = noEffects
+update SaveEdit s@{newText: Just t} = noEffects $
   s { text = t
     , newText = Nothing
     }
-update SaveEdit s =
-  noEffects s
+update SaveEdit s = noEffects (s { status = ItemDirty })
 
 
 view :: State -> Html Action
@@ -111,4 +106,3 @@ view s = div ##
       , onKeyUp (\e -> Edit e.target.value)
       ]
       []
-

@@ -12,15 +12,16 @@ module Components.AJAXList
 import Components.AJAXListItem as AJAXListItem
 import Data.Array as A
 import Data.Map as M
-import Control.Monad.Aff (attempt)
+import Resources.AJAXList as ListR
+import Control.Monad.Aff (Aff, attempt)
 import Data.Argonaut (decodeJson)
 import Data.Either (Either(Right, Left), either)
 import Data.Maybe (Maybe(Just, Nothing))
 import Data.Monoid ((<>), mempty)
 import Data.Tuple (Tuple(Tuple))
 import Network.HTTP.Affjax (AJAX, get)
-import Prelude (map, pure, show, bind, (<<<))
-import Pux (mapState, mapEffects, noEffects, EffModel)
+import Prelude (($), map, pure, show, bind, (<<<))
+import Pux (mapState, mapEffects, EffModel, noEffects)
 import Pux.Html (Html, div, li, ol, text, (##), (!), (#))
 import Pux.Html.Attributes (className)
 -------------------------------------------------------------------------------
@@ -61,21 +62,17 @@ update (ReceiveList (Right items)) s =
   noEffects (s { items = items, status = ListFetched})
 update RefreshList s = {
       state: s { status = ListFetching }
-    , effects: [do
-      res <- attempt (get "/items.json")
-      let decode reply = decodeJson reply.response
-      let t = either (Left <<< show) (map (mapItemsById <<< (map AJAXListItem.fromRawState)) <<< decode) res
-      pure (ReceiveList t)
-      ]
+    , effects: [map (ReceiveList <<< map (mapItemsById <<< map AJAXListItem.fromRawState)) ListR.getList]
     }
+-- TODO: we'll be responsible for saving
 update (AJAXItemAction id a) s = case M.lookup id s.items of
-  Just itemState -> mapState (\is -> s { items = M.insert id is s.items})
-                             (mapEffects (AJAXItemAction id) (AJAXListItem.update a itemState))
+  Just itemState -> mapState updateItem (mapEffects (AJAXItemAction id) (AJAXListItem.update a itemState))
   Nothing -> noEffects s
   where
-    go { status: AJAXListItem.ItemDeleted} = Nothing
-    go itemState = Just (AJAXListItem.update a itemState)
-
+    updateItem { status: AJAXListItem.ItemDeleted} =
+      s { items = M.delete id s.items }
+    updateItem itemState =
+      s { items = M.insert id itemState s.items }
 
 view :: State -> Html Action
 view s = div !
